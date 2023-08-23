@@ -50,9 +50,7 @@ app.post('/updatetempform/', async (request, response) => {
         INSERT INTO calibration_data(srfNo, equipmentNo, equipmentCondition, dateOfCalibration, recommendedCalibrationDue, calibrationPoints,
             make, model, srNoIdNo, locationDepartment, range, resolution, accuracy, unitUnderMeasurement, temperature,
             humidity, sopNumber, remarks, calibratedBy, checkedBy)
-        VALUES (${srfNo}, ${equipmentNo}, ${equipmentCondition}, ${dateOfCalibration}, ${recommendedCalibrationDue}, ${calibrationPoints},
-            ${make}, ${model}, ${srNoIdNo}, ${locationDepartment}, ${range}, ${resolution}, ${accuracy}, ${unitUnderMeasurement}, ${temperature},
-            ${humidity}, ${sopNumber}, ${remarks}, ${calibratedBy}, ${checkedBy})`;
+        VALUES (?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?,?, ?, ?)`;
 
     const dbResponse1 = await db.run(calibrationPost);
     const calibrationId = dbResponse1.lastID;
@@ -64,7 +62,7 @@ app.post('/updatetempform/', async (request, response) => {
 
     const standardUsedPost = `
         INSERT INTO standard_used(calibration_data_id, instrumentName, instrumentSrNo, certificateNo, calibrationDueOn)
-        VALUES (${calibrationId}, '${instrumentName}', '${instrumentSrNo}', '${certificateNo}', '${calibrationDueOn}')`;
+        VALUES (?, ?, ?, ?, ?)`;
 
     const dbResponse2 = await db.run(standardUsedPost);
     const standardUsedId = dbResponse2.lastID;
