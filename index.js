@@ -15,6 +15,53 @@ const InitializeDBAndServer = async()=>{
             filename : dbPath,
             driver : sqlite3.Database,
         })
+
+        await db.run('PRAGMA foreign_keys = ON');
+
+        await db.exec(`
+            CREATE TABLE IF NOT EXISTS calibration_data (
+                id INTEGER PRIMARY KEY,
+                srfNo TEXT,
+                equipmentNo TEXT,
+                equipmentCondition TEXT,
+                dateOfCalibration DATE,
+                recommendedCalibrationDue DATE,
+                calibrationPoints TEXT,
+                make TEXT,
+                model TEXT, 
+                srNoIdNo TEXT, 
+                locationDepartment TEXT, 
+                range TEXT, 
+                resolution TEXT, 
+                accuracy TEXT, 
+                unitUnderMeasurement TEXT, 
+                temperature TEXT,
+                humidity TEXT, 
+                sopNumber TEXT, 
+                remarks TEXT, 
+                calibratedBy TEXT,
+                checkedBy TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS standard_used (
+                id INTEGER PRIMARY KEY,
+                calibration_data_id INTEGER,
+                instrumentName TEXT, 
+                instrumentSrNo TEXT, 
+                certificateNo TEXT, 
+                calibrationDueOn DATE,
+                FOREIGN KEY (calibration_data_id) REFERENCES calibration_data (id)
+            );
+
+            CREATE TABLE IF NOT EXISTS observation_rows (
+                id INTEGER PRIMARY KEY,
+                calibration_data_id INTEGER,
+                observation_row_number INTEGER,
+                observation_data TEXT,
+                FOREIGN KEY (calibration_data_id) REFERENCES calibration_data (id)
+            );
+        `);
+
         app.listen(3000, ()=>{
             console.log("Server is running on https://localhost:3000")
         }) 
@@ -26,9 +73,22 @@ const InitializeDBAndServer = async()=>{
 }
 InitializeDBAndServer();
 
-app.get('/', (request, response) => {
-    // Handle the GET request here
-    response.send('Hello, this is the root path!');
+app.get('/getdata', async (request, response) => {
+    const getdataquery = `
+    SELECT
+        c.*,
+        su.instrumentName,
+        su.instrumentSrNo,
+        su.certificateNo,
+        su.calibrationDueOn,
+        o.observation_row_number,
+        o.observation_data
+    FROM calibration_data c
+    LEFT JOIN standard_used su ON c.id = su.calibration_data_id
+    LEFT JOIN observation_rows o ON c.id = o.calibration_data_id
+    ORDER BY c.id;`;
+    const allquery = await db.all(getdataquery)
+    response.send(allquery);
   });
 
 
@@ -36,8 +96,6 @@ app.post('/updatetempform/', async (request, response) => {
         
     
     const { calibrationPOstQuery, standardUsed , observations} = request.body;
-
-    await db.run('PRAGMA foreign_keys = ON');
 
     const {
         srfNo, equipmentNo, equipmentCondition, dateOfCalibration, recommendedCalibrationDue, calibrationPoints,
@@ -50,7 +108,9 @@ app.post('/updatetempform/', async (request, response) => {
         INSERT INTO calibration_data(srfNo, equipmentNo, equipmentCondition, dateOfCalibration, recommendedCalibrationDue, calibrationPoints,
             make, model, srNoIdNo, locationDepartment, range, resolution, accuracy, unitUnderMeasurement, temperature,
             humidity, sopNumber, remarks, calibratedBy, checkedBy)
-        VALUES (?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?,?, ?, ?)`;
+        VALUES (${srfNo}, ${equipmentNo}, ${equipmentCondition}, ${dateOfCalibration}, ${recommendedCalibrationDue}, ${calibrationPoints},
+            ${make}, ${model}, ${srNoIdNo}, ${locationDepartment}, ${range}, ${resolution}, ${accuracy}, ${unitUnderMeasurement}, ${temperature},${humidity}, 
+            ${sopNumber},${remarks}, ${calibratedBy}, ${checkedBy})`; 
 
     const dbResponse1 = await db.run(calibrationPost);
     const calibrationId = dbResponse1.lastID;
@@ -62,16 +122,16 @@ app.post('/updatetempform/', async (request, response) => {
 
     const standardUsedPost = `
         INSERT INTO standard_used(calibration_data_id, instrumentName, instrumentSrNo, certificateNo, calibrationDueOn)
-        VALUES (?, ?, ?, ?, ?)`;
-
+        VALUES (${calibrationId}, ${instrumentName},${instrumentSrNo},${certificateNo},${calibrationDueOn})`;
+        
     const dbResponse2 = await db.run(standardUsedPost);
     const standardUsedId = dbResponse2.lastID;
 
     // Observation Query
 
     for (const observationRow of observations) {
-        const observationRowNumber = observationRow.observation_row_number;
-        const observationData = observationRow.observation_data;
+        const observationRowNumber = Object.keys(observationRow)[0];
+        const observationData = observationRow[observationRowNumber];
 
         const observationPost = `
             INSERT INTO observation_rows(calibration_data_id, observation_row_number, observation_data)
