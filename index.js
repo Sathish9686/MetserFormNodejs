@@ -95,7 +95,7 @@ app.get('/getdata', async (request, response) => {
 app.post('/updatetempform/', async (request, response) => {
         
     
-    const { calibrationPOstQuery, standardUsed , observations} = request.body;
+    const { calibrationPOstQuery, standardUsedForCalibration , observations} = request.body;
 
     const {
         srfNo, equipmentNo, equipmentCondition, dateOfCalibration, recommendedCalibrationDue, calibrationPoints,
@@ -116,17 +116,18 @@ app.post('/updatetempform/', async (request, response) => {
     const calibrationId = dbResponse1.lastID;
 
     // StandrardUsed Query
-    const {
-        instrumentName, instrumentSrNo, certificateNo, calibrationDueOn
-    } = standardUsed;
+    for (const eachstandardused of standardUsedForCalibration ){
+        const {
+            instrumentName, instrumentSrNo, certificateNo, calibrationDueOn
+        } = eachstandardused; 
 
     const standardUsedPost = `
         INSERT INTO standard_used(calibration_data_id, instrumentName, instrumentSrNo, certificateNo, calibrationDueOn)
         VALUES (${calibrationId}, ${instrumentName},${instrumentSrNo},${certificateNo},${calibrationDueOn})`;
         
     const dbResponse2 = await db.run(standardUsedPost);
-    const standardUsedId = dbResponse2.lastID;
-
+    const insertedStandardUsedId  = dbResponse2.lastID;
+}
     // Observation Query
 
     for (const observationRow of observations) {
@@ -137,10 +138,11 @@ app.post('/updatetempform/', async (request, response) => {
             INSERT INTO observation_rows(calibration_data_id, observation_row_number, observation_data)
             VALUES (${calibrationId}, ${observationRowNumber}, '${observationData}')`;
 
-        await db.run(observationPost);
+        const dbResponse3 = await db.run(observationPost);
+        const observationId = dbResponse3.lastID;
     }
 
-    response.send({ calibrationId, standardUsedId , observations});
+    response.send({ calibrationId, insertedStandardUsedId  , observationId});
 
 })
 
