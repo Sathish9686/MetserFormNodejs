@@ -93,9 +93,10 @@ app.get('/getdata', async (request, response) => {
 
 
 app.post('/updatetempform/', async (request, response) => {
-        
+       console.log(request.body) 
     
     const { calibrationPOstQuery, standardUsedForCalibration , observations} = request.body;
+    
 
     const {
         srfNo, equipmentNo, equipmentCondition, dateOfCalibration, recommendedCalibrationDue, calibrationPoints,
@@ -127,7 +128,7 @@ app.post('/updatetempform/', async (request, response) => {
         
     const dbResponse2 = await db.run(standardUsedPost);
     const insertedStandardUsedId  = dbResponse2.lastID;
-}
+    }
     // Observation Query
 
     for (const observationRow of observations) {
@@ -142,7 +143,7 @@ app.post('/updatetempform/', async (request, response) => {
         const observationId = dbResponse3.lastID;
     }
 
-    response.send({ calibrationId, insertedStandardUsedId  , observationId});
+    response.send( calibrationId, insertedStandardUsedId  , observationId);
 
 })
 
