@@ -113,7 +113,7 @@ app.post('/updatetempform/', async (request, response) => {
             ${make}, ${model}, ${srNoIdNo}, ${locationDepartment}, ${range}, ${resolution}, ${accuracy}, ${unitUnderMeasurement}, ${temperature},${humidity}, 
             ${sopNumber},${remarks}, ${calibratedBy}, ${checkedBy})`; 
 
-    const dbResponse1 = await db.run(calibrationPost, Object.values(calibrationPOstQuery));
+    const dbResponse1 = await db.run(calibrationPost);
     const calibrationId = dbResponse1.lastID;
 
     // StandrardUsed Query
