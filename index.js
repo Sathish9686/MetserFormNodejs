@@ -105,11 +105,13 @@ app.post('/updatetempform/', async (request, response) => {
         INSERT INTO calibration_data(srfNo, equipmentNo, equipmentCondition, dateOfCalibration, recommendedCalibrationDue, calibrationPoints,
             make, model, srNoIdNo, locationDepartment, range, resolution, accuracy, unitUnderMeasurement, temperature,
             humidity, sopNumber, remarks, calibratedBy, checkedBy)
-        VALUES ('${srfNo}', '${equipmentNo}', '${equipmentCondition}', ${dateOfCalibration}, ${recommendedCalibrationDue}, '${calibrationPoints}',
-            '${make}', '${model}',' ${srNoIdNo}', '${locationDepartment}', '${range}', '${resolution}', '${accuracy}', '${unitUnderMeasurement}', '${temperature}','${humidity}', 
-            '${sopNumber}','${remarks}', '${calibratedBy}', '${checkedBy}')`; 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`; 
 
-    const dbResponse1 = await db.run(calibrationPost);
+    const dbResponse1 = await db.run(calibrationPost [
+        srfNo, equipmentNo, equipmentCondition, dateOfCalibration, recommendedCalibrationDue, calibrationPoints,
+        make, model, srNoIdNo, locationDepartment, range, resolution, accuracy, unitUnderMeasurement, temperature,
+        humidity, sopNumber, remarks, calibratedBy, checkedBy
+    ]);
     const calibrationId = dbResponse1.lastID;
 
     // StandrardUsed Query
